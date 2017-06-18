@@ -1,27 +1,29 @@
 import org.scalajs.dom.html.Canvas
 import org.scalajs.dom.raw.MouseEvent
+import rx._
 
 class EventHandler(render: Render, game: Game) {
+  implicit val ctx: Ctx.Owner = Ctx.Owner.safe()
+
+  private val mouseEvent = Var[MouseEvent](null)
+
+  private val pos = Rx {
+    val mouseAxis = getMouseAxis(mouseEvent())
+    render.axisToPos(mouseAxis._1, mouseAxis._2)
+  }
 
   def setEvents(canvas: Canvas): Unit = {
-    canvas.onclick = e => clickEvent(e)
-    canvas.onmousemove = e => mouseMoveEvent(e)
+    canvas.onclick = e => eventTemplate(e, clickOnBoard)
+    canvas.onmousemove = e => eventTemplate(e, {
+      render.loop(game)
+      render.effect
+    })
   }
 
-  def clickEvent(e: MouseEvent): Unit = {
-    val (mouseX, mouseY) = getMouseAxis(e)
-    render.axisToPos(mouseX, mouseY) match {
-      case Some((x, y)) => clickOnBoard(x, y)
-      case None =>
-    }
-  }
-
-  def mouseMoveEvent(e: MouseEvent): Unit = {
-    val (mouseX, mouseY) = getMouseAxis(e)
-    render.axisToPos(mouseX, mouseY) match {
-      case Some((x, y)) =>
-        render.loop(game)
-        render.effect(x, y)
+  def eventTemplate(e: MouseEvent, f: (Int, Int) => Unit): Unit = {
+    mouseEvent() = e
+    pos.now match {
+      case Some((x, y)) => f(x, y)
       case None =>
     }
   }
@@ -62,6 +64,5 @@ class EventHandler(render: Render, game: Game) {
     val rect = e.srcElement.getBoundingClientRect()
     (e.clientX - rect.left, e.clientY - rect.top)
   }
-
 
 }

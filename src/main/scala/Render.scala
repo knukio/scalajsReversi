@@ -1,4 +1,4 @@
-import org.scalajs.dom.html.{Canvas, Div, Document}
+import org.scalajs.dom.html.{Canvas, Div}
 import org.scalajs.dom.raw.CanvasRenderingContext2D
 
 class Render(canvas: Canvas, message: Div) {
